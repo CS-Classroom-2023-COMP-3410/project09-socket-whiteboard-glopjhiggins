@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // TODO: Set up Socket.IO event handlers
   socket.on('connect', () => {
       console.log('Connected to the server');
+      connectionStatus.textContent = 'Connected to the server'; // Update connection status
+      connectionStatus.style.color = 'green'; // Change text color to green
   });
   socket.on('disconnect', () => {
       console.log('Disconnected from the server');
@@ -60,8 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
       userCount.textContent = `Current Users: ${count}`; // Update user count display
   });
   socket.on('clear', () => {
+      context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
       console.log('Canvas cleared');
-      clearCanvas(); // Clear the canvas when the 'clear' event is received
   });
 
   // Canvas event handlers
@@ -72,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Capture the initial coordinates
     lastX = e.offsetX;
     lastY = e.offsetY;
-  console.log(`Mouse down at (${x}, ${y})`);
+    console.log(`Mouse down at (${lastX}, ${lastY})`);
   });
 
   canvas.addEventListener('mousemove', e => {
@@ -82,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     drawLine(lastX, lastY, e.offsetX, e.offsetY, colorInput.value, brushSizeInput.value);
     lastX = e.offsetX;
     lastY = e.offsetY;
-    console.log(`Mouse move at (${x}, ${y})`);
+    console.log(`Mouse move at (${lastX}, ${lastY})`);
   });
 
   canvas.addEventListener('mouseup', e => {
@@ -100,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Clear button event handler
   // TODO: Add event listener for the clear button
   clearButton.addEventListener('click', () => {
-    clearCanvas();
+    socket.emit('clear'); // Emit clear event to the server
   });
 
   // Update brush size display

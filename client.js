@@ -42,25 +42,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // TODO: Set up Socket.IO event handlers
   socket.on('connect', () => {
       console.log('Connected to the server');
-      connectionStatus.textContent = 'Connected to the server'; // Update connection status
+      connectionStatus.textContent = 'Connected to the server';
       connectionStatus.style.color = 'green'; // Change text color to green
   });
+  // Handle disconnection
   socket.on('disconnect', () => {
       console.log('Disconnected from the server');
   });
+  // Listen for the initial board state from the server
   socket.on('boardState', (state) => {
-      console.log('Received board state:', state); // Log the received board state
-      boardState = state; // Update the board state
+      console.log('Received board state:', state);
+      boardState = state;
       redrawCanvas(boardState); // Redraw the canvas with the received board state
   });
+  // Listen for drawing events from the server
   socket.on('draw', (drawData) => {
-      console.log('Received draw data:', drawData); // Log the received draw data
+      console.log('Received draw data:', drawData);
       draw(drawData); // Call the draw function with the received data
   });
+  // Listen for current user count updates
   socket.on('currentUsers', (count) => { 
       console.log('Current users:', count);
       userCount.textContent = `Current Users: ${count}`; // Update user count display
   });
+  // Listen for clear events from the server
   socket.on('clear', () => {
       context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
       console.log('Canvas cleared');
@@ -79,12 +84,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   canvas.addEventListener('mousemove', e => {
     if (!isDrawing) {return};
-
     // Draw on the canvas
     drawLine(lastX, lastY, e.offsetX, e.offsetY, colorInput.value, brushSizeInput.value);
     lastX = e.offsetX;
     lastY = e.offsetY;
     console.log(`Mouse move at (${lastX}, ${lastY})`);
+    // Emit draw event to the server
+    socket.emit('draw', {
+      x0: lastX,
+      y0: lastY,
+      x1: e.offsetX,
+      y1: e.offsetY,
+      color: colorInput.value,
+      size: brushSizeInput.value
+    });
   });
 
   canvas.addEventListener('mouseup', e => {
@@ -102,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Clear button event handler
   // TODO: Add event listener for the clear button
   clearButton.addEventListener('click', () => {
-    socket.emit('clear'); // Emit clear event to the server
+    clearCanvas();
   });
 
   // Update brush size display
@@ -112,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   brushSizeInput.addEventListener('input', () => {
-    brushSizeDisplay.textContent = `Brush Size: ${brushSizeInput.value}`;
+    brushSizeDisplay.textContent = brushSizeInput.value;
   });
 
 
@@ -136,12 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // TODO: Emit 'draw' event to the server with drawing data
     // TODO: Update last position
     if (!isDrawing) {return;}
-    const { x, y } = getCoordinates(e);
+    const coords = getCoordinates(e);
     socket.emit('draw', {
       x0: lastX,
       y0: lastY,
-      x1: x,
-      y1: y,
+      x1: coords.x,
+      y1: coords.y,
       color: colorInput.value,
       size: brushSizeInput.value
     });
@@ -161,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
     context.lineCap = 'round';
     context.stroke();
     context.closePath();
-  
 
   }
 
